@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Scraper API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #1a2744;
+            color: #fff;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .sidebar .subtitle {
+            font-size: 12px;
+            color: #8b9bb4;
+            margin-bottom: 32px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: #8b9bb4;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .nav-tab.active {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 32px;
+            max-width: 1400px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a2744;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        /* Pill Buttons for Trip Type */
+        .pill-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pill-btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pill-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .pill-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+
+        /* Multi-select Dropdown */
+        .multiselect {
+            position: relative;
+        }
+
+        .multiselect-trigger {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .multiselect-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .multiselect-dropdown.open {
+            display: block;
+        }
+
+        .multiselect-option {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .multiselect-option:hover {
+            background: #f3f4f6;
+        }
+
+        .multiselect-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* Button */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* Loading Spinner */
+        .loading-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+        }
+
+        .loading-container.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* Results Table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .results-table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .results-table .price {
+            font-weight: 600;
+            color: #10b981;
+            font-size: 14px;
+        }
+
+        .results-table .book-link {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .results-table .book-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Error Section */
+        .error-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+        }
+
+        .error-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #dc2626;
+            font-size: 13px;
+        }
+
+        .error-item:not(:last-child) {
+            margin-bottom: 8px;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-cached {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-ready {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        /* XPath Manager Table */
+        .xpath-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .xpath-table th,
+        .xpath-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .xpath-table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .xpath-table input[type="text"],
+        .xpath-table textarea {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .xpath-table input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .xpath-table textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .xpath-table .field-name {
+            font-family: monospace;
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* Multi-city legs */
+        .legs-container {
+            margin-top: 12px;
+        }
+
+        .leg-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        /* Provider status */
+        .provider-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .provider-status.ready {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .provider-status.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .provider-status.error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-icon {
+            font-size: 16px;
+        }
+
+        /* Duration footer */
+        .search-footer {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Sort header */
+        .sort-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sort-header:hover {
+            background: #e5e7eb;
+        }
+
+        .sort-header::after {
+            content: ' \2195';
+            color: #9ca3af;
+        }
+
+        .sort-header.asc::after {
+            content: ' \2191';
+        }
+
+        .sort-header.desc::after {
+            content: ' \2193';
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h1>Flight Scraper</h1>
+        <p class="subtitle">Multi-provider price API</p>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="search">
+                Flight Search
+            </button>
+            <button class="nav-tab" data-tab="xpath">
+                XPath Manager
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Tab 1: Flight Search -->
+        <div id="tab-search" class="tab-content active">
+            <div class="card">
+                <h2>Search Parameters</h2>
+
+                <!-- Trip Type -->
+                <div class="form-group">
+                    <label>Trip Type</label>
+                    <div class="pill-group">
+                        <button class="pill-btn active" data-trip-type="oneway">One Way</button>
+                        <button class="pill-btn" data-trip-type="return">Return</button>
+                        <button class="pill-btn" data-trip-type="multicity">Multi-City</button>
+                    </div>
+                </div>
+
+                <!-- Providers -->
+                <div class="form-group">
+                    <label>Providers</label>
+                    <div class="multiselect" id="provider-multiselect">
+                        <div class="multiselect-trigger" onclick="toggleProviderDropdown()">
+                            <span id="provider-selected-text">Select providers...</span>
+                            <span>&#9662;</span>
+                        </div>
+                        <div class="multiselect-dropdown" id="provider-dropdown">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Origin/Destination -->
+                <div class="form-row" id="origin-dest-row">
+                    <div class="form-group">
+                        <label>Origin (IATA)</label>
+                        <input type="text" id="origin" placeholder="e.g. MAA" maxlength="3">
+                    </div>
+                    <div class="form-group">
+                        <label>Destination (IATA)</label>
+                        <input type="text" id="destination" placeholder="e.g. DEL" maxlength="3">
+                    </div>
+                </div>
+
+                <!-- Dates -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Outbound Date</label>
+                        <input type="date" id="outbound-date">
+                    </div>
+                    <div class="form-group" id="return-date-group" style="display: none;">
+                        <label>Return Date</label>
+                        <input type="date" id="return-date">
+                    </div>
+                </div>
+
+                <!-- Multi-city legs -->
+                <div class="form-group hidden" id="multicity-legs-group">
+                    <label>Multi-City Legs</label>
+                    <div class="legs-container" id="legs-container">
+                        <!-- Dynamic leg rows -->
+                    </div>
+                    <div style="margin-top: 12px; display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="addLegRow()">+ Add Leg</button>
+                        <button class="btn btn-secondary btn-sm" onclick="removeLegRow()">- Remove Last</button>
+                    </div>
+                </div>
+
+                <!-- Passengers & Cabin -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Passengers</label>
+                        <input type="number" id="passengers" min="1" max="9" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Cabin Class</label>
+                        <select id="cabin-class">
+                            <option value="economy">Economy</option>
+                            <option value="premium_economy">Premium Economy</option>
+                            <option value="business">Business</option>
+                            <option value="first">First Class</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="searchFlights()" id="search-btn">
+                    Search Flights
+                </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="card loading-container" id="loading-container">
+                <div class="spinner"></div>
+                <p class="loading-text">Scraping live prices...</p>
+            </div>
+
+            <!-- Results -->
+            <div class="card hidden" id="results-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 style="margin: 0; border: none; padding: 0;">Results</h2>
+                    <span class="badge badge-cached hidden" id="cached-badge">Cached Result</span>
+                </div>
+
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th class="sort-header" onclick="sortResults('airline')">Airline</th>
+                            <th>Flight No</th>
+                            <th class="sort-header" onclick="sortResults('departure_time')">Departure</th>
+                            <th class="sort-header" onclick="sortResults('arrival_time')">Arrival</th>
+                            <th class="sort-header" onclick="sortResults('duration')">Duration</th>
+                            <th class="sort-header" onclick="sortResults('stops')">Stops</th>
+                            <th class="sort-header" onclick="sortResults('price')">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+
+                <!-- Errors -->
+                <div class="error-section hidden" id="errors-section">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="search-footer">
+                    <span id="results-count">0 results</span>
+                    <span id="search-duration">Scraped in 0s</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: XPath Manager -->
+        <div id="tab-xpath" class="tab-content">
+            <div class="card">
+                <h2>XPath Configuration</h2>
+
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Provider</label>
+                        <select id="xpath-provider" onchange="loadProviderXpaths()">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" onclick="loadProviderXpaths()">Load XPaths</button>
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-success" onclick="saveAllXpaths()">Bulk Save</button>
+                    </div>
+                </div>
+
+                <div id="provider-status-container" style="margin-bottom: 16px;">
+                    <!-- Status badge populated by JS -->
+                </div>
+
+                <table class="xpath-table">
+                    <thead>
+                        <tr>
+                            <th>Field Name</th>
+                            <th>XPath</th>
+                            <th>CSS Selector</th>
+                            <th>Description</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xpath-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+
+                <!-- Add new row form -->
+                <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+                    <h4 style="margin-bottom: 12px; font-size: 13px;">Add New XPath</h4>
+                    <div class="form-row">
+                        <input type="text" id="new-field-name" placeholder="Field Name" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                        <input type="text" id="new-xpath" placeholder="XPath" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                        <input type="text" id="new-css" placeholder="CSS Selector" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                        <input type="text" id="new-description" placeholder="Description" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                        <button class="btn btn-primary btn-sm" onclick="addNewXPath()">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State
+        let currentTripType = 'oneway';
+        let selectedProviders = [];
+        let allProviders = [];
+        let currentXpaths = [];
+        let flightResults = [];
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+
+                if (tab.dataset.tab === 'xpath') {
+                    loadProvidersForXpath();
+                }
+            });
+        });
+
+        // Trip Type Selection
+        document.querySelectorAll('[data-trip-type]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-trip-type]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTripType = btn.dataset.tripType;
+                updateFormForTripType();
+            });
+        });
+
+        function updateFormForTripType() {
+            const returnDateGroup = document.getElementById('return-date-group');
+            const originDestRow = document.getElementById('origin-dest-row');
+            const multicityLegs = document.getElementById('multicity-legs-group');
+
+            if (currentTripType === 'oneway') {
+                returnDateGroup.style.display = 'none';
+                originDestRow.style.display = 'grid';
+                multicityLegs.classList.add('hidden');
+            } else if (currentTripType === 'return') {
+                returnDateGroup.style.display = 'block';
+                originDestRow.style.display = 'grid';
+                multicityLegs.classList.add('hidden');
+            } else if (currentTripType === 'multicity') {
+                returnDateGroup.style.display = 'none';
+                originDestRow.style.display = 'none';
+                multicityLegs.classList.remove('hidden');
+            }
+        }
+
+        // Provider Multiselect
+        function toggleProviderDropdown() {
+            document.getElementById('provider-dropdown').classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.multiselect')) {
+                document.getElementById('provider-dropdown').classList.remove('open');
+            }
+        });
+
+        async function loadProviders() {
+            try {
+                const response = await fetch('/api/flights/providers');
+                allProviders = await response.json();
+
+                const dropdown = document.getElementById('provider-dropdown');
+                dropdown.innerHTML = allProviders.map(p => `
+                    <div class="multiselect-option">
+                        <input type="checkbox" value="${p.name}" ${selectedProviders.includes(p.name) ? 'checked' : ''} onchange="updateSelectedProviders()">
+                        <span>${p.name} ${p.is_ready ? '✓' : ''}</span>
+                    </div>
+                `).join('');
+
+                updateProviderSelectedText();
+            } catch (error) {
+                console.error('Failed to load providers:', error);
+            }
+        }
+
+        function updateSelectedProviders() {
+            const checkboxes = document.querySelectorAll('#provider-dropdown input[type="checkbox"]');
+            selectedProviders = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            updateProviderSelectedText();
+        }
+
+        function updateProviderSelectedText() {
+            const text = selectedProviders.length > 0
+                ? `${selectedProviders.length} provider(s) selected`
+                : 'Select providers...';
+            document.getElementById('provider-selected-text').textContent = text;
+        }
+
+        // Multi-city legs
+        let legCount = 0;
+
+        function addLegRow() {
+            legCount++;
+            const container = document.getElementById('legs-container');
+            const row = document.createElement('div');
+            row.className = 'leg-row';
+            row.dataset.legIndex = legCount;
+            row.innerHTML = `
+                <input type="text" placeholder="Origin" class="leg-origin" maxlength="3">
+                <input type="text" placeholder="Destination" class="leg-dest" maxlength="3">
+                <input type="date" class="leg-date">
+                <button class="btn btn-danger btn-sm" onclick="removeLegRow(${legCount})">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeLegRow(index) {
+            const container = document.getElementById('legs-container');
+            if (index) {
+                const row = container.querySelector(`[data-leg-index="${index}"]`);
+                if (row) row.remove();
+            } else if (container.lastChild) {
+                container.lastChild.remove();
+            }
+        }
+
+        // Search Flights
+        async function searchFlights() {
+            if (selectedProviders.length === 0) {
+                alert('Please select at least one provider');
+                return;
+            }
+
+            const payload = {
+                providers: selectedProviders,
+                trip_type: currentTripType,
+                passengers: parseInt(document.getElementById('passengers').value),
+                cabin_class: document.getElementById('cabin-class').value,
+            };
+
+            if (currentTripType === 'multicity') {
+                const legs = [];
+                document.querySelectorAll('.leg-row').forEach(row => {
+                    const origin = row.querySelector('.leg-origin').value.toUpperCase();
+                    const dest = row.querySelector('.leg-dest').value.toUpperCase();
+                    const date = row.querySelector('.leg-date').value;
+                    if (origin && dest && date) {
+                        legs.push({ origin, destination: dest, date });
+                    }
+                });
+
+                if (legs.length === 0) {
+                    alert('Please add at least one valid leg');
+                    return;
+                }
+                payload.multi_city_legs = legs;
+            } else {
+                const origin = document.getElementById('origin').value.toUpperCase();
+                const dest = document.getElementById('destination').value.toUpperCase();
+                const outbound = document.getElementById('outbound-date').value;
+
+                if (!origin || !dest || !outbound) {
+                    alert('Please fill in origin, destination, and outbound date');
+                    return;
+                }
+
+                payload.origin = origin;
+                payload.destination = dest;
+                payload.outbound_date = outbound;
+
+                if (currentTripType === 'return') {
+                    const returnDate = document.getElementById('return-date').value;
+                    if (!returnDate) {
+                        alert('Please select a return date');
+                        return;
+                    }
+                    payload.return_date = returnDate;
+                }
+            }
+
+            // Show loading
+            document.getElementById('search-btn').disabled = true;
+            document.getElementById('loading-container').classList.add('active');
+            document.getElementById('results-card').classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/flights/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+
+                // Hide loading, show results
+                document.getElementById('loading-container').classList.remove('active');
+                document.getElementById('results-card').classList.remove('hidden');
+                document.getElementById('search-btn').disabled = false;
+
+                displayResults(data);
+            } catch (error) {
+                document.getElementById('loading-container').classList.remove('active');
+                document.getElementById('search-btn').disabled = false;
+                alert('Search failed: ' + error.message);
+            }
+        }
+
+        function displayResults(data) {
+            flightResults = data.results;
+
+            // Cached badge
+            const cachedBadge = document.getElementById('cached-badge');
+            cachedBadge.classList.toggle('hidden', !data.cached);
+
+            // Results table
+            const tbody = document.getElementById('results-body');
+            tbody.innerHTML = flightResults.map(r => `
+                <tr>
+                    <td>${r.provider}</td>
+                    <td>${r.airline}</td>
+                    <td>${r.flight_number || '-'}</td>
+                    <td>${r.departure_time}</td>
+                    <td>${r.arrival_time}</td>
+                    <td>${r.duration}</td>
+                    <td>${r.stops}</td>
+                    <td class="price">₹${r.price.toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            // Errors
+            const errorsSection = document.getElementById('errors-section');
+            if (data.errors && data.errors.length > 0) {
+                errorsSection.classList.remove('hidden');
+                errorsSection.innerHTML = data.errors.map(e => `
+                    <div class="error-item">
+                        <strong>${e.provider}:</strong> ${e.message} (${e.reason})
+                    </div>
+                `).join('');
+            } else {
+                errorsSection.classList.add('hidden');
+            }
+
+            // Footer
+            document.getElementById('results-count').textContent = `${data.total_results} result(s)`;
+            document.getElementById('search-duration').textContent = `Scraped in ${(data.duration_ms / 1000).toFixed(1)}s`;
+
+            // Sort by price initially
+            sortResults('price', false);
+        }
+
+        function sortResults(field, toggle = true) {
+            const headers = document.querySelectorAll('.sort-header');
+            const currentHeader = document.querySelector(`.sort-header[onclick="sortResults('${field}')"]`);
+
+            // Determine sort direction
+            let direction = 'asc';
+            if (toggle && currentHeader.classList.contains('asc')) {
+                direction = 'desc';
+            }
+
+            // Clear all sort classes
+            headers.forEach(h => h.classList.remove('asc', 'desc'));
+
+            // Sort results
+            flightResults.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+
+                if (field === 'price') {
+                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+                if (field === 'stops') {
+                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+                return direction === 'asc'
+                    ? String(aVal).localeCompare(String(bVal))
+                    : String(bVal).localeCompare(String(aVal));
+            });
+
+            // Update header class
+            if (currentHeader) {
+                currentHeader.classList.add(direction);
+            }
+
+            // Re-render
+            const tbody = document.getElementById('results-body');
+            tbody.innerHTML = flightResults.map(r => `
+                <tr>
+                    <td>${r.provider}</td>
+                    <td>${r.airline}</td>
+                    <td>${r.flight_number || '-'}</td>
+                    <td>${r.departure_time}</td>
+                    <td>${r.arrival_time}</td>
+                    <td>${r.duration}</td>
+                    <td>${r.stops}</td>
+                    <td class="price">₹${r.price.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        // XPath Manager
+        async function loadProvidersForXpath() {
+            const select = document.getElementById('xpath-provider');
+            select.innerHTML = allProviders.map(p => `
+                <option value="${p.name}">${p.name}</option>
+            `).join('');
+        }
+
+        async function loadProviderXpaths() {
+            const provider = document.getElementById('xpath-provider').value;
+
+            try {
+                const response = await fetch(`/api/xpaths/${provider}`);
+                currentXpaths = await response.json();
+
+                // Update status
+                updateProviderStatus(provider);
+
+                // Render table
+                renderXpathTable();
+            } catch (error) {
+                console.error('Failed to load XPaths:', error);
+            }
+        }
+
+        function updateProviderStatus(provider) {
+            const providerInfo = allProviders.find(p => p.name === provider);
+            const container = document.getElementById('provider-status-container');
+
+            if (!providerInfo) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let statusClass = 'error';
+            let statusText = 'Not Configured';
+            let icon = '✕';
+
+            if (providerInfo.is_ready) {
+                statusClass = 'ready';
+                statusText = 'Ready';
+                icon = '✓';
+            } else if (providerInfo.active_field_count > 0) {
+                statusClass = 'warning';
+                statusText = `${providerInfo.active_field_count}/${providerInfo.required_field_count} fields`;
+                icon = '!';
+            }
+
+            container.innerHTML = `
+                <span class="provider-status ${statusClass}">
+                    <span class="status-icon">${icon}</span>
+                    <span>${statusText}</span>
+                </span>
+            `;
+        }
+
+        function renderXpathTable() {
+            const tbody = document.getElementById('xpath-table-body');
+            tbody.innerHTML = currentXpaths.map((xp, index) => `
+                <tr data-index="${index}">
+                    <td><span class="field-name">${xp.field_name}</span></td>
+                    <td><input type="text" value="${xp.xpath || ''}" onchange="updateXpathField(${index}, 'xpath', this.value)"></td>
+                    <td><input type="text" value="${xp.css_selector || ''}" onchange="updateXpathField(${index}, 'css_selector', this.value)"></td>
+                    <td><input type="text" value="${xp.description || ''}" onchange="updateXpathField(${index}, 'description', this.value)"></td>
+                    <td><input type="checkbox" ${xp.is_active ? 'checked' : ''} onchange="updateXpathField(${index}, 'is_active', this.checked)"></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="saveXPath('${xp.id}')">Save</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteXPath('${xp.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateXpathField(index, field, value) {
+            currentXpaths[index][field] = value;
+        }
+
+        async function saveXPath(id) {
+            const xpath = currentXpaths.find(x => x.id === id);
+            if (!xpath) return;
+
+            try {
+                await fetch(`/api/xpaths/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        xpath: xpath.xpath,
+                        css_selector: xpath.css_selector,
+                        description: xpath.description,
+                        is_active: xpath.is_active,
+                    }),
+                });
+                alert('XPath saved successfully');
+                loadProviderXpaths();
+            } catch (error) {
+                alert('Failed to save XPath: ' + error.message);
+            }
+        }
+
+        async function deleteXPath(id) {
+            if (!confirm('Are you sure you want to delete this XPath?')) return;
+
+            try {
+                await fetch(`/api/xpaths/${id}`, { method: 'DELETE' });
+                alert('XPath deleted successfully');
+                loadProviderXpaths();
+            } catch (error) {
+                alert('Failed to delete XPath: ' + error.message);
+            }
+        }
+
+        async function saveAllXpaths() {
+            const provider = document.getElementById('xpath-provider').value;
+
+            const entries = currentXpaths.map(xp => ({
+                provider_name: provider,
+                field_name: xp.field_name,
+                xpath: xp.xpath,
+                css_selector: xp.css_selector,
+                description: xp.description,
+                is_active: xp.is_active,
+            }));
+
+            try {
+                await fetch('/api/xpaths/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entries }),
+                });
+                alert('All XPaths saved successfully');
+                loadProvidersForXpath();
+            } catch (error) {
+                alert('Failed to save XPaths: ' + error.message);
+            }
+        }
+
+        async function addNewXPath() {
+            const provider = document.getElementById('xpath-provider').value;
+            const fieldName = document.getElementById('new-field-name').value;
+            const xpath = document.getElementById('new-xpath').value;
+            const css = document.getElementById('new-css').value;
+            const description = document.getElementById('new-description').value;
+
+            if (!fieldName) {
+                alert('Field name is required');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/xpaths', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        provider_name: provider,
+                        field_name: fieldName,
+                        xpath: xpath || null,
+                        css_selector: css || null,
+                        description: description || null,
+                        is_active: true,
+                    }),
+                });
+
+                if (response.ok) {
+                    alert('XPath added successfully');
+                    document.getElementById('new-field-name').value = '';
+                    document.getElementById('new-xpath').value = '';
+                    document.getElementById('new-css').value = '';
+                    document.getElementById('new-description').value = '';
+                    loadProviderXpaths();
+                } else {
+                    alert('Failed to add XPath');
+                }
+            } catch (error) {
+                alert('Failed to add XPath: ' + error.message);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProviders();
+            updateFormForTripType();
+
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('outbound-date').min = today;
+            document.getElementById('return-date').min = today;
+        });
+    </script>
+</body>
+</html>
