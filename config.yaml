@@ -1,0 +1,7 @@
+# ==================== PostgreSQL Database Configuration ====================
+postgres:
+  host: "${POSTGRES_HOST:localhost}"
+  port: "${POSTGRES_PORT:5432}"
+  database: "${POSTGRES_DATABASE:crawlerdb}"
+  user: "${POSTGRES_USER:postgres}"
+  password: "${POSTGRES_PASSWORD:password}"
